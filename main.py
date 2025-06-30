@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
 from fastapi import FastAPI, Depends, HTTPException, status
 from models.user_models import User
+from models.class_models import FitBooking
 from routers import user_router, class_router
 
 

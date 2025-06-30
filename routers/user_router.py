@@ -118,6 +118,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     return {
         "message": "Login successful",
         "user_id": db_user.id,
+        "token": token,
         "username": db_user.username,
         "email": db_user.email,
         "user_type": db_user.user_type,
@@ -202,7 +203,35 @@ async def create_session(session: CreateSession, db: Session = Depends(get_db)):
 
 
 
-# router.get("/classes")
-# async def get_all_classes(db: Session = Depends(get_db)):
-#     pass
+@router.get("/session_data")
+async def get_session_data(
+    token: str = Query(..., description="Session token"),
+    db: Session = Depends(get_db)
+):
+    db_session = db.query(SessionToken).filter(SessionToken.token == token).first()
 
+    if not db_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session token not found"
+        )
+
+    if db_session.expires_at and db_session.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session token has expired"
+        )
+
+    try:
+        decrypted_bytes = base64.b64decode(db_session.encrypt_session_data)
+        session_data_json = decrypted_bytes.decode()
+        session_data = json.loads(session_data_json)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to decrypt session data: {str(e)}"
+        )
+
+    return {
+        "session_data": session_data
+    }
