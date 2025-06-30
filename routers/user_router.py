@@ -135,6 +135,8 @@ async def all_instructors(db: Session = Depends(get_db)):
     return db_user
     
 
+
+
 @router.post("/create_session", status_code=status.HTTP_201_CREATED)
 async def create_session(session: CreateSession, db: Session = Depends(get_db)):
 
@@ -179,7 +181,7 @@ async def create_session(session: CreateSession, db: Session = Depends(get_db)):
         )
     
     create_session = FitClasses(
-        instructor_name=db_user.first_name,
+        instructor_name=f"{db_user.first_name} {db_user.last_name}",
         instructor_id=db_user.id,
         class_name=session.class_name,
         start_date=session.start_date,
@@ -192,12 +194,15 @@ async def create_session(session: CreateSession, db: Session = Depends(get_db)):
     db.refresh(create_session)
 
     return {
-        "message": f"Instructor {db_user.first_name} class '{session.class_name}' "
+        "message": f"Instructor {db_user.first_name} {db_user.last_name} class '{session.class_name}' "
                    f"is created between {session.start_date} to "
                    f"{session.end_date} with {session.allot_slot} slots."
     }
     
 
 
-    
+
+# router.get("/classes")
+# async def get_all_classes(db: Session = Depends(get_db)):
+#     pass
 
