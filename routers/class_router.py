@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header, Query, status
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from database import get_db
-from schemas.classes_schemas import AllClasss
+from schemas.classes_schemas import AllClasss, AllBooking
 import base64, json
 import pytz
 
@@ -163,3 +163,58 @@ async def book_class(
         "end_date": c_end,
         "remaining_slots": class_book.remaining_slot
     }
+
+
+
+@router.get("/bookings", status_code=status.HTTP_201_CREATED, response_model=List[AllBooking])
+async def bookings(
+    token: str = Query(..., description="Session token"),
+    class_id: int = Query(..., description="ID of the fitness class to book"),
+    db: Session = Depends(get_db)
+):
+    db_session = db.query(SessionToken).filter(SessionToken.token == token).first()
+
+    if not db_session:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Session token not found"
+        )
+
+    if db_session.expires_at and db_session.expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session token has expired"
+        )
+
+    try:
+        decrypted_bytes = base64.b64decode(db_session.encrypt_session_data)
+        session_data = json.loads(decrypted_bytes.decode())
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to decrypt session data: {str(e)}"
+        )
+    if session_data.get("user_type") == "STUDENT":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You are a student, and you are not allowed to view bookings."
+        )
+    
+    time_zone = session_data.get("time_zone")
+
+    all_booking = db.query(FitBooking).filter(FitBooking.class_id == class_id, FitBooking.is_active == True).all()
+    all_bookings = []
+    for cls in all_booking:
+        converted_start = convert_utc_to_local(cls.start_date, time_zone)
+        converted_end = convert_utc_to_local(cls.end_date, time_zone)
+        converted_booked_at = convert_utc_to_local(cls.booked_at, time_zone)
+        all_bookings.append(AllBooking(
+            id=cls.id,
+            class_id=cls.class_id,
+            user_id=cls.user_id,
+            start_date=converted_start,
+            end_date=converted_end,
+            booked_at=converted_booked_at
+        ))
+
+    return all_bookings

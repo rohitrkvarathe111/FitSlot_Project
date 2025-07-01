@@ -20,3 +20,14 @@ class AllClasss(BaseModel):
         orm_mode = True
 
 
+
+class AllBooking(BaseModel):
+    id: int
+    class_id: int
+    user_id: int
+    start_date: datetime
+    end_date: datetime
+    booked_at: datetime
+
+    class Config:
+        orm_mode = True
