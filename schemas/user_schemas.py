@@ -44,6 +44,7 @@ class SessionTokenBase(BaseModel):
 class Instructor(BaseModel):
     id: int
     username: str
+    email: EmailStr
     first_name: str
     middle_name: Optional[str] = None
     last_name: Optional[str] = None

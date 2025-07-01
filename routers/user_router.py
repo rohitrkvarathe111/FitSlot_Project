@@ -97,6 +97,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
         "username": db_user.username,
         "email": db_user.email,
         "user_type": db_user.user_type,
+        "time_zone": db_user.time_zone,
         "login_time": datetime.utcnow().isoformat()
     }
 
@@ -110,7 +111,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
         token=token,
         encrypt_session_data=encrypt_session_data,
         created_at=datetime.utcnow(),
-        expires_at=expires_at
+        expires_at=expires_at,
     )
     
     db.add(session_token)
