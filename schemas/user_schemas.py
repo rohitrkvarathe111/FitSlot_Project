@@ -20,6 +20,7 @@ class UserCreate(BaseModel):
     first_name: str
     middle_name: Optional[str] = None
     last_name: Optional[str] = None
+    time_zone: Optional[str] = None
     mobile_number: Optional[constr(max_length=13)] = None
     user_type: UserTypeEnum
     is_admin: Optional[bool] = False
@@ -48,6 +49,7 @@ class Instructor(BaseModel):
     last_name: Optional[str] = None
     mobile_number: Optional[str] = None
     user_type: UserTypeEnum
+    time_zone: str
 
     class Config:
         orm_mode = True

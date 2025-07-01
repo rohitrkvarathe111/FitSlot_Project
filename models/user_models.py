@@ -28,6 +28,7 @@ class User(Base):
     )
     is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
+    time_zone = Column(String, nullable=False, default="UTC")
     created_by = Column(Integer, ForeignKey('users.id'), nullable=True)
     update_by = Column(Integer, ForeignKey('users.id'), nullable=True)
 

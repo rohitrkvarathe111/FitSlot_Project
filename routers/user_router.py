@@ -8,6 +8,7 @@ from passlib.context import CryptContext
 import secrets
 import base64
 import json
+import pytz
 from sqlalchemy import or_
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -51,6 +52,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
         mobile_number=user.mobile_number,
         user_type=user.user_type.value,  
         is_admin=user.is_admin,
+        time_zone=user.time_zone,
     )
     db.add(new_user)
     db.commit()
@@ -162,11 +164,19 @@ async def create_session(session: CreateSession, db: Session = Depends(get_db)):
             detail="Instructor not found"
         )
     
+    session_start_date = session.start_date
+    session_end_date = session.end_date
+
+    # start_date_utc = session_start_date.astimezone(pytz.UTC)
+    start_date_utc = convert_to_utc(session_start_date, db_user.time_zone)
+    # end_date_utc = session_end_date.astimezone(pytz.UTC)
+    end_date_utc = convert_to_utc(session_end_date, db_user.time_zone)
+    
     existing_session = db.query(FitClasses).filter(
             FitClasses.instructor_id == session.instructor_id,
             or_(
-                FitClasses.start_date.between(session.start_date, session.end_date),
-                FitClasses.end_date.between(session.start_date, session.end_date)
+                FitClasses.start_date.between(start_date_utc, end_date_utc),
+                FitClasses.end_date.between(start_date_utc, end_date_utc)
             )
         ).first()
     if existing_session:
@@ -185,8 +195,8 @@ async def create_session(session: CreateSession, db: Session = Depends(get_db)):
         instructor_name=f"{db_user.first_name} {db_user.last_name}",
         instructor_id=db_user.id,
         class_name=session.class_name,
-        start_date=session.start_date,
-        end_date=session.end_date,
+        start_date=start_date_utc,
+        end_date=end_date_utc,
         allot_slot=session.allot_slot,
         remaining_slot=session.allot_slot 
     )
@@ -196,8 +206,8 @@ async def create_session(session: CreateSession, db: Session = Depends(get_db)):
 
     return {
         "message": f"Instructor {db_user.first_name} {db_user.last_name} class '{session.class_name}' "
-                   f"is created between {session.start_date} to "
-                   f"{session.end_date} with {session.allot_slot} slots."
+                   f"is created between {session_start_date} to "
+                   f"{session.end_date} with {session_end_date} slots."
     }
     
 
@@ -235,3 +245,22 @@ async def get_session_data(
     return {
         "session_data": session_data
     }
+
+
+
+
+def convert_to_utc(local_time: str, time_zone_str: str) -> datetime:
+
+    if isinstance(local_time, str):
+        naive_dt = datetime.strptime(local_time, "%Y-%m-%dT%H:%M:%S")
+    elif isinstance(local_time, datetime):
+        naive_dt = local_time
+    else:
+        raise TypeError("local_time must be str or datetime.")
+    tz = pytz.timezone(time_zone_str)
+    if naive_dt.tzinfo is None:
+        local_dt = tz.localize(naive_dt)
+    else:
+        local_dt = naive_dt.astimezone(tz)
+    utc_dt = local_dt.astimezone(pytz.UTC)
+    return utc_dt

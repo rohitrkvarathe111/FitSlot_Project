@@ -20,8 +20,15 @@ router = APIRouter(
 
 @router.get("/class", response_model=List[AllClasss])
 async def get_class(db: Session = Depends(get_db)):
+
+
+
+
     classes = db.query(FitClasses).all()
     return classes
+
+
+
 
 
 
