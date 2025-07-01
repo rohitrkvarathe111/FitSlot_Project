@@ -211,10 +211,12 @@ async def bookings(
         all_bookings.append(AllBooking(
             id=cls.id,
             class_id=cls.class_id,
+            class_name=cls.fitness_class.class_name,
+            instructor_name=cls.fitness_class.instructor_name,
             user_id=cls.user_id,
+            student_name=f"{cls.user.first_name} {cls.user.last_name}",
             start_date=converted_start,
             end_date=converted_end,
             booked_at=converted_booked_at
         ))
-
     return all_bookings

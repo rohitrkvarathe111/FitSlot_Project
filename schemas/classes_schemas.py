@@ -24,7 +24,10 @@ class AllClasss(BaseModel):
 class AllBooking(BaseModel):
     id: int
     class_id: int
+    class_name: str
+    instructor_name: str
     user_id: int
+    student_name: str
     start_date: datetime
     end_date: datetime
     booked_at: datetime
