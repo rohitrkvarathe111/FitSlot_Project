@@ -2,11 +2,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-DATABASE_URL = "sqlite:///./FitBook.db"
+DATABASE_URL = "postgresql://fitpostgres_user:QH2RjwRykxepk4VkvwBJ8nsuXxwOgsV0@dpg-d2177u3uibrs73edmva0-a.oregon-postgres.render.com:5432/fitpostgres"
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+
+# engine = create_engine(
+#     DATABASE_URL, connect_args={"check_same_thread": False}
+# )
+connect_args={"check_same_thread": False}
+
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
